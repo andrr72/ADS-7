@@ -1,15 +1,49 @@
 // Copyright 2022 NNTU-CS
 #include <iostream>
+#include <cstdint>
+#include <chrono>
+#include <vector>
+#include <random>
+
+
 #include "train.h"
 
+void testTrain(int n, int mode, int& steps, int64_t& micros) {
+    Train train;
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dis(0, 1);
+
+    for (int i = 0; i < n; ++i) {
+        bool light = false;
+        if (mode == 1) light = true;
+        else if (mode == 2) light = dis(gen);
+        train.addCar(light);
+    }
+
+    auto start = std::chrono::high_resolution_clock::now();
+    [[maybe_unused]] int len = train.getLength();
+    auto end = std::chrono::high_resolution_clock::now();
+
+    auto duration = std::chrono::duration_cast<
+        std::chrono::microseconds>(end - start);
+    micros = duration.count();
+    steps = train.getOpCount();
+}
+
 int main() {
-  Train train;
-  int count = 60; // кол-во вагонов
+    std::cout << "Длина, Режим, Шаги, Время (в миллисекундах)" <<
+        std::endl;
 
-  while (count--)
-    train.addCar(false);
+    for (int n = 10; n <= 100; n += 10) {
+        for (int mode = 0; mode <= 2; ++mode) {
+            int steps;
+            int64_t micros;
+            testTrain(n, mode, steps, micros);
+            std::cout << n << "," << mode << "," <<
+                steps << "," << micros << std::endl;
+        }
+    }
 
-  std::cout << train.getLength() << std::endl;
-  std::cout << train.getOpCount() << std::endl;
-  return 0;
+    return 0;
 }
